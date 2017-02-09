@@ -344,7 +344,7 @@ xml_doc document(It &s, const It &e)
 
 		s = curr;
 	} catch (const parser_error &ex) {
-
+		ret.version = "1.0";
 	}
 
 	ret.root = element(s, e);
