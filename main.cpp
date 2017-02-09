@@ -354,31 +354,31 @@ xml_doc document(It &s, const It &e)
 
 }
 
-void dump(const xml_node *node, int depth = 0)
+void print_node(std::ostream &os, const xml_node *node, int depth = 0)
 {
 	if (node == nullptr)
 		return;
 
 	for (int i = 0; i < depth; i++) {
-		std::cout << " ";
+		os << " ";
 	}
 
-	std::cout << node->name << " [";
+	os << node->name << " [";
 
 	for (auto &p : node->attributes) {
-		std::cout << p.first << "=" << p.second << ", ";
+		os << p.first << "=" << p.second << ", ";
 	}
 
-	std::cout << "]";
+	os << "]";
 
 	if (!node->value.empty()) {
-		std::cout << " = " << node->value;
+		os << " = " << node->value;
 	}
 
-	std::cout << std::endl;
+	os << std::endl;
 
 	for (auto &c : node->children) {
-		dump(c, depth + 1);
+		print_node(os, c, depth + 1);
 	}
 }
 
@@ -408,10 +408,13 @@ int main(int argc, char *argv[])
 		std::for_each(start, end, [] (char c) {
 			std::cerr << c;
 		});
+		std::cerr << std::endl;
+
+		return 1;
 	}
 
 	std::cout << "XML version: " << doc.version << std::endl << std::endl;
-	dump(doc.root);
+	print_node(std::cout, doc.root);
 	std::cout << std::endl;
 
 	return 0;
