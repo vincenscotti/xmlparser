@@ -1,22 +1,20 @@
-document ::= prologue element
+document ::= prologue? element
 
-prologue ::= XMLDecl? S?
-XMDecl ::= '<?xml' VersionInfo S? '?>'
-VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
-Eq ::= S? '=' S?
-VersionNum ::= '1.0'
+prologue ::= xml_decl space?
+xml_decl ::= "<?xml" version_info space? "?>"
+version_info ::= space "version" equals ("'1.0'" | '"1.0"')
+equals ::= space? "=" space?
 
-element ::= EmptyElemTag | STag content ETag
-EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
-STag ::= '<' Name (S Attribute)* S? '>'
-Name ::= (Letter | '_' | ':') (NameChar)*
-Attribute ::= Name Eq AttValue
-AttValue ::= "'" CharData* "'" | '"' CharData* '"'
-ETag ::= '</' Name S? '>'
+element ::= "<" name (space attribute)* space? ("/>" | (">" content "</" name space? ">"))
+name ::= (letter | '_' | ':') namechar*
+attribute ::= name equals attribute_value
+attribute_value ::= ('"' (char - '"')* '"') | ("'" (char - "'")* "'")
 
-content ::= CharData* | element*
+content ::= chardata* | (space? element)*
 
-Char ::= #xA | [#x20 - #x7E]
-S ::= (#x20 | #x9 | #xD | #xA)+
-NameChar ::= Letter | Digit | '.' | ':' | '-' | '_'
-CharData ::= Char - ('<' | '&')
+char ::= #xA | [#x20 to #x7E]
+space ::= (#x20 | #x9 | #xD | #xA)+
+namechar ::= letter | digit | '.' | ':' | '-' | '_'
+chardata ::= char - ('<' | '&')
+letter ::= [#x41 to #x7A]
+digit ::= [#x30 to #x39]

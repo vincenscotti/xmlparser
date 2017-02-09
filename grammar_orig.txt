@@ -1,0 +1,22 @@
+document ::= prologue element
+
+prologue ::= XMLDecl? S?
+XMDecl ::= '<?xml' VersionInfo S? '?>'
+VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
+Eq ::= S? '=' S?
+VersionNum ::= '1.0'
+
+element ::= EmptyElemTag | STag content ETag
+EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
+STag ::= '<' Name (S Attribute)* S? '>'
+Name ::= (Letter | '_' | ':') (NameChar)*
+Attribute ::= Name Eq AttValue
+AttValue ::= "'" CharData* "'" | '"' CharData* '"'
+ETag ::= '</' Name S? '>'
+
+content ::= CharData* | element*
+
+Char ::= #xA | [#x20 - #x7E]
+S ::= (#x20 | #x9 | #xD | #xA)+
+NameChar ::= Letter | Digit | '.' | ':' | '-' | '_'
+CharData ::= Char - ('<' | '&')
