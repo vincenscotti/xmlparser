@@ -53,17 +53,13 @@ void match_char(It &s, const It &e, char c)
 template <typename It>
 void match_string(It &s, const It &e, const std::string &str)
 {
-	auto curr = s;
-
 	for (char c : str) {
-		if (curr == e || *curr != c) {
+		if (s == e || *s != c) {
 			throw no_match{};
 		}
 
-		curr++;
+		s++;
 	}
-
-	s = curr;
 }
 
 template <typename It>
@@ -81,36 +77,34 @@ void whitespaces(It &s, const It &e)
 template <typename It>
 void equals(It &s, const It &e)
 {
-	auto curr = s;
-
 	try {
-		whitespaces(curr, e);
+		whitespaces(s, e);
 	} catch (const no_match &) {
 
 	}
 
-	match_char(curr, e, '=');
+	match_char(s, e, '=');
 
 	try {
-		whitespaces(curr, e);
+		whitespaces(s, e);
 	} catch (const no_match &) {
 
 	}
-
-	s = curr;
 }
 
 template <typename It>
 std::string version_info(It &s, const It &e)
 {
+	whitespaces(s, e);
+	match_string(s, e, "version");
+	equals(s, e);
+
 	auto curr = s;
 
-	whitespaces(curr, e);
-	match_string(curr, e, "version");
-	equals(curr, e);
 	try {
 		match_string(curr, e, "'1.0'");
 	} catch (const no_match &) {
+		curr = s;
 		match_string(curr, e, "\"1.0\"");
 	}
 
@@ -123,22 +117,19 @@ template <typename It>
 std::string xml_decl(It &s, const It &e)
 {
 	std::string version;
-	auto curr = s;
 	auto first_match = "<?xml";
 	auto last_match = "?>";
 
-	match_string(curr, e, first_match);
-	version = version_info(curr, e);
+	match_string(s, e, first_match);
+	version = version_info(s, e);
 
 	try {
-		whitespaces(curr, e);
+		whitespaces(s, e);
 	} catch (const no_match &) {
 
 	}
 
-	match_string(curr, e, last_match);
-
-	s = curr;
+	match_string(s, e, last_match);
 
 	return version;
 }
@@ -148,21 +139,13 @@ xml_doc prologue(It &s, const It &e)
 {
 	xml_doc doc;
 
-	auto curr = s;
+	doc.version = xml_decl(s, e);
 
 	try {
-		doc.version = xml_decl(curr, e);
-	} catch (const no_match &) {
-		doc.version = "1.0";
-	}
-
-	try {
-		whitespaces(curr, e);
+		whitespaces(s, e);
 	} catch (const no_match &) {
 
 	}
-
-	s = curr;
 
 	return doc;
 }
@@ -170,7 +153,6 @@ xml_doc prologue(It &s, const It &e)
 template <typename It>
 std::string name(It &s, const It &e)
 {
-	auto curr = s;
 	std::string ret;
 	char c;
 
@@ -178,26 +160,24 @@ std::string name(It &s, const It &e)
 		throw no_match{};
 	}
 
-	c = *curr;
+	c = *s;
 	if (!std::isalpha(c) && c != '_' && c != ':') {
 		throw no_match{};
 	}
 
 	ret += c;
-	curr++;
+	s++;
 
-	while (curr != e) {
-		c = *curr;
+	while (s != e) {
+		c = *s;
 
 		if (!std::isalnum(c) && c != '.' && c != ':' && c != '-' && c != '_') {
 			break;
 		}
 
 		ret += c;
-		curr++;
+		s++;
 	}
-
-	s = curr;
 
 	return ret;
 }
@@ -229,32 +209,28 @@ std::string chardata(It &s, const It &e)
 template <typename It>
 std::string attribute_value(It &s, const It &e)
 {
-	auto curr = s;
-
 	std::string ret;
 	char quote_char = '"';
 	char c;
 
 	try {
-		match_char(curr, e, quote_char);
+		match_char(s, e, quote_char);
 	} catch (const no_match &) {
 		quote_char = '\'';
-		match_char(curr, e, quote_char);
+		match_char(s, e, quote_char);
 	}
 
-	while (curr != e) {
-		c = *curr;
+	while (s != e) {
+		c = *s;
 
 		if (c == quote_char) {
-			curr++;
+			s++;
 			break;
 		}
 
 		ret += c;
-		curr++;
+		s++;
 	}
-
-	s = curr;
 
 	return ret;
 }
@@ -262,15 +238,11 @@ std::string attribute_value(It &s, const It &e)
 template <typename It>
 std::pair<std::string, std::string> attribute(It &s, const It &e)
 {
-	auto curr = s;
-
 	std::pair<std::string, std::string> ret;
 
-	ret.first = name(curr, e);
-	equals(curr, e);
-	ret.second = attribute_value(curr, e);
-
-	s = curr;
+	ret.first = name(s, e);
+	equals(s, e);
+	ret.second = attribute_value(s, e);
 
 	return ret;
 }
@@ -287,47 +259,53 @@ void rtrim(std::string &s)
 template <typename It>
 xml_node *element(It &s, const It &e)
 {
-	auto curr = s;
-
 	xml_node *ret = new xml_node;
 	bool empty_node;
 
 	try {
-		match_char(curr, e, '<');
-		ret->name = name(curr, e);
+		match_char(s, e, '<');
+		ret->name = name(s, e);
 
 		while (true) {
 			try {
-				whitespaces(curr, e);
-				ret->attributes.insert(attribute(curr, e));
+				whitespaces(s, e);
+//				ret->attributes.insert(attribute(curr, e));
+				ret->attributes.insert(attribute(s, e));
 			} catch (const no_match &) {
 				break;
 			}
 		}
 
 		try {
+			auto curr = s;
+
 			match_char(curr, e, '/');
 			empty_node = true;
+
+			s = curr;
 		} catch (const no_match &) {
 			empty_node = false;
 		}
 
-		match_char(curr, e, '>');
+		match_char(s, e, '>');
 
 		if (empty_node) {
-			s = curr;
 			return ret;
 		}
 
 		while (true) {
 			try {
-				whitespaces(curr, e);
+				whitespaces(s, e);
 			} catch (const no_match &) {
 
 			}
 
 			try {
+				auto curr = s;
+
 				ret->children.push_back(element(curr, e));
+
+				s = curr;
 			} catch (const no_match &) {
 				break;
 			}
@@ -335,30 +313,28 @@ xml_node *element(It &s, const It &e)
 
 		if (ret->children.empty()) {
 			try {
-				ret->value = chardata(curr, e);
+				ret->value = chardata(s, e);
 				rtrim(ret->value);
 			} catch (const no_match &) {
 
 			}
 		}
 
-		match_char(curr, e, '<');
-		match_char(curr, e, '/');
-		match_string(curr, e, ret->name);
+		match_char(s, e, '<');
+		match_char(s, e, '/');
+		match_string(s, e, ret->name);
 
 		try {
-			whitespaces(curr, e);
+			whitespaces(s, e);
 		} catch (const no_match &) {
 
 		}
 
-		match_char(curr, e, '>');
+		match_char(s, e, '>');
 	} catch (const no_match &) {
 		delete ret;
 		throw;
 	}
-
-	s = curr;
 
 	return ret;
 }
@@ -366,15 +342,20 @@ xml_node *element(It &s, const It &e)
 template <typename It>
 xml_doc document(It &s, const It &e)
 {
-	auto curr = s;
-
 	xml_doc ret;
 
 	try {
-		ret = prologue(curr, e);
-		ret.root = element(curr, e);
+		try {
+			auto curr = s;
 
-		s = curr;
+			ret = prologue(curr, e);
+
+			s = curr;
+		} catch (const no_match &ex) {
+
+		}
+
+		ret.root = element(s, e);
 	} catch (const no_match &ex) {
 		std::cerr << ex.what() << std::endl;
 	}
