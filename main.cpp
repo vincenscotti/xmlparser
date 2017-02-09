@@ -338,20 +338,16 @@ xml_doc document(It &s, const It &e)
 	xml_doc ret;
 
 	try {
-		try {
-			auto curr = s;
+		auto curr = s;
 
-			ret = prologue(curr, e);
+		ret = prologue(curr, e);
 
-			s = curr;
-		} catch (const parser_error &ex) {
-
-		}
-
-		ret.root = element(s, e);
+		s = curr;
 	} catch (const parser_error &ex) {
-		std::cerr << ex.what() << std::endl;
+
 	}
+
+	ret.root = element(s, e);
 
 	return ret;
 }
@@ -403,16 +399,19 @@ int main(int argc, char *argv[])
 
 	xml_doc doc;
 
-	doc = parsers::document(start, end);
+	try {
+		doc = parsers::document(start, end);
+	} catch (const parsers::parser_error &ex) {
+		std::cerr << ex.what() << std::endl << std::endl;
 
-	std::cout << "xml version: " << doc.version << std::endl;
+		std::cerr << "Chars left: " << std::distance(start, end) << std::endl;
+		std::for_each(start, end, [] (char c) {
+			std::cerr << c;
+		});
+	}
+
+	std::cout << "XML version: " << doc.version << std::endl << std::endl;
 	dump(doc.root);
-
-	std::cout << "chars left: " << std::distance(start, end) << std::endl;
-	std::for_each(start, end, [] (char c) {
-		std::cout << c;
-	});
-
 	std::cout << std::endl;
 
 	return 0;
