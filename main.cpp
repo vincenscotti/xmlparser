@@ -22,7 +22,7 @@ public:
 	xml_node *root;
 
 	xml_doc() :
-		root(nullptr)
+		root{nullptr}
 	{
 
 	}
@@ -31,20 +31,34 @@ public:
 namespace parsers
 {
 
-class no_match : public std::exception
+class parser_error : public std::exception
 {
 public:
+	parser_error(const std::string &msg) :
+		err_string{msg}
+	{
+
+	}
+
 	virtual const char *what() const noexcept override
 	{
-		return "no match!";
+		return error_string().c_str();
 	}
+
+	virtual const std::string error_string() const
+	{
+		return "token not found: " + err_string;
+	}
+
+private:
+	std::string err_string;
 };
 
 template <typename It>
 void match_char(It &s, const It &e, char c)
 {
 	if (s == e || *s != c) {
-		throw no_match{};
+		throw parser_error{std::string{c}};
 	}
 
 	s++;
@@ -55,7 +69,7 @@ void match_string(It &s, const It &e, const std::string &str)
 {
 	for (char c : str) {
 		if (s == e || *s != c) {
-			throw no_match{};
+			throw parser_error{str};
 		}
 
 		s++;
@@ -66,7 +80,7 @@ template <typename It>
 void whitespaces(It &s, const It &e)
 {
 	if (s == e || !std::isspace(*s)) {
-		throw no_match{};
+		throw parser_error{"whitespace"};
 	}
 
 	do {
@@ -75,21 +89,21 @@ void whitespaces(It &s, const It &e)
 }
 
 template <typename It>
-void equals(It &s, const It &e)
+void maybe_whitespaces(It &s, const It &e)
 {
 	try {
 		whitespaces(s, e);
-	} catch (const no_match &) {
+	} catch (const parser_error &) {
 
 	}
+}
 
+template <typename It>
+void equals(It &s, const It &e)
+{
+	maybe_whitespaces(s, e);
 	match_char(s, e, '=');
-
-	try {
-		whitespaces(s, e);
-	} catch (const no_match &) {
-
-	}
+	maybe_whitespaces(s, e);
 }
 
 template <typename It>
@@ -103,7 +117,7 @@ std::string version_info(It &s, const It &e)
 
 	try {
 		match_string(curr, e, "'1.0'");
-	} catch (const no_match &) {
+	} catch (const parser_error &) {
 		curr = s;
 		match_string(curr, e, "\"1.0\"");
 	}
@@ -122,13 +136,7 @@ std::string xml_decl(It &s, const It &e)
 
 	match_string(s, e, first_match);
 	version = version_info(s, e);
-
-	try {
-		whitespaces(s, e);
-	} catch (const no_match &) {
-
-	}
-
+	maybe_whitespaces(s, e);
 	match_string(s, e, last_match);
 
 	return version;
@@ -141,11 +149,7 @@ xml_doc prologue(It &s, const It &e)
 
 	doc.version = xml_decl(s, e);
 
-	try {
-		whitespaces(s, e);
-	} catch (const no_match &) {
-
-	}
+	maybe_whitespaces(s, e);
 
 	return doc;
 }
@@ -157,12 +161,12 @@ std::string name(It &s, const It &e)
 	char c;
 
 	if (s == e) {
-		throw no_match{};
+		throw parser_error{"name"};
 	}
 
 	c = *s;
 	if (!std::isalpha(c) && c != '_' && c != ':') {
-		throw no_match{};
+		throw parser_error{"name"};
 	}
 
 	ret += c;
@@ -189,7 +193,7 @@ std::string chardata(It &s, const It &e)
 	char c;
 
 	if (s == e || *s == '<') {
-		throw no_match{};
+		throw parser_error{"chardata"};
 	}
 
 	while (s != e) {
@@ -215,7 +219,7 @@ std::string attribute_value(It &s, const It &e)
 
 	try {
 		match_char(s, e, quote_char);
-	} catch (const no_match &) {
+	} catch (const parser_error &) {
 		quote_char = '\'';
 		match_char(s, e, quote_char);
 	}
@@ -269,9 +273,8 @@ xml_node *element(It &s, const It &e)
 		while (true) {
 			try {
 				whitespaces(s, e);
-//				ret->attributes.insert(attribute(curr, e));
 				ret->attributes.insert(attribute(s, e));
-			} catch (const no_match &) {
+			} catch (const parser_error &) {
 				break;
 			}
 		}
@@ -283,7 +286,7 @@ xml_node *element(It &s, const It &e)
 			empty_node = true;
 
 			s = curr;
-		} catch (const no_match &) {
+		} catch (const parser_error &) {
 			empty_node = false;
 		}
 
@@ -294,11 +297,7 @@ xml_node *element(It &s, const It &e)
 		}
 
 		while (true) {
-			try {
-				whitespaces(s, e);
-			} catch (const no_match &) {
-
-			}
+			maybe_whitespaces(s, e);
 
 			try {
 				auto curr = s;
@@ -306,7 +305,7 @@ xml_node *element(It &s, const It &e)
 				ret->children.push_back(element(curr, e));
 
 				s = curr;
-			} catch (const no_match &) {
+			} catch (const parser_error &) {
 				break;
 			}
 		}
@@ -315,7 +314,7 @@ xml_node *element(It &s, const It &e)
 			try {
 				ret->value = chardata(s, e);
 				rtrim(ret->value);
-			} catch (const no_match &) {
+			} catch (const parser_error &) {
 
 			}
 		}
@@ -323,15 +322,9 @@ xml_node *element(It &s, const It &e)
 		match_char(s, e, '<');
 		match_char(s, e, '/');
 		match_string(s, e, ret->name);
-
-		try {
-			whitespaces(s, e);
-		} catch (const no_match &) {
-
-		}
-
+		maybe_whitespaces(s, e);
 		match_char(s, e, '>');
-	} catch (const no_match &) {
+	} catch (const parser_error &) {
 		delete ret;
 		throw;
 	}
@@ -351,12 +344,12 @@ xml_doc document(It &s, const It &e)
 			ret = prologue(curr, e);
 
 			s = curr;
-		} catch (const no_match &ex) {
+		} catch (const parser_error &ex) {
 
 		}
 
 		ret.root = element(s, e);
-	} catch (const no_match &ex) {
+	} catch (const parser_error &ex) {
 		std::cerr << ex.what() << std::endl;
 	}
 
@@ -403,6 +396,7 @@ int main(int argc, char *argv[])
 	infile >> std::noskipws;
 
 	std::istream_iterator<char> file_it(infile), eof;
+
 	std::string buffer(file_it, eof);
 	auto start = buffer.begin();
 	const auto end = buffer.end();
