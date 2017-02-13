@@ -15,6 +15,6 @@ content ::= chardata* | (space? element)*
 char ::= #xA | [#x20 to #x7E]
 space ::= (#x20 | #x9 | #xD | #xA)+
 namechar ::= letter | digit | '.' | ':' | '-' | '_'
-chardata ::= char - ('<' | '&')
+chardata ::= char - '<'
 letter ::= [#x41 to #x7A]
 digit ::= [#x30 to #x39]
