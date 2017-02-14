@@ -6,15 +6,14 @@ version_info ::= space "version" equals ("'1.0'" | '"1.0"')
 equals ::= space? "=" space?
 
 element ::= "<" name (space attribute)* space? ("/>" | (">" content "</" name space? ">"))
-name ::= (letter | '_' | ':') namechar*
+name ::= (letter | '_' | ':') (letter | digit | '.' | ':' | '-' | '_')*
 attribute ::= name equals attribute_value
 attribute_value ::= ('"' (char - '"')* '"') | ("'" (char - "'")* "'")
 
-content ::= chardata* | (space? element)*
+content ::= chardata | (space? element)*
 
 char ::= #xA | [#x20 to #x7E]
-space ::= (#x20 | #x9 | #xD | #xA)+
-namechar ::= letter | digit | '.' | ':' | '-' | '_'
-chardata ::= char - '<'
+chardata ::= (char - '<')*
 letter ::= [#x41 to #x7A]
 digit ::= [#x30 to #x39]
+space ::= (#x20 | #x9 | #xD | #xA)+
