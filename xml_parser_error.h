@@ -13,7 +13,7 @@ public:
 
 	virtual const char *what() const noexcept override;
 
-	virtual const std::string error_string() const;
+	virtual const std::string &error_string() const;
 
 private:
 	std::string err_string;

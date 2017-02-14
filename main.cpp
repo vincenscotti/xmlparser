@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	} catch (const xml::parser_error &ex) {
 		std::cerr << ex.what() << std::endl << std::endl;
 
-		std::cerr << "Chars left: " << std::distance(start, end) << std::endl;
+		std::cerr << "Chars left: " << std::distance(start, end) << std::endl << std::endl;
 		std::for_each(start, end, [] (char c) {
 			std::cerr << c;
 		});
