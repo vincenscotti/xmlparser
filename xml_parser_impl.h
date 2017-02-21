@@ -35,7 +35,7 @@ template <typename It>
 void space(It &s, const It &e)
 {
 	if (s == e || !std::isspace(*s)) {
-		throw parser_error{"whitespace"};
+		throw parser_error{"space"};
 	}
 
 	do {
