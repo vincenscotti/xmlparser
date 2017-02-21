@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include "xml.h"
 #include "xml_parser_error.h"
 
@@ -143,25 +144,13 @@ std::string name(It &s, const It &e)
 template <typename It>
 std::string chardata(It &s, const It &e)
 {
-	std::string ret;
-	char c;
+	auto old_s = s;
 
-	if (s == e || *s == '<') {
-		throw parser_error{"chardata"};
-	}
+	auto pos = std::find(s, e, '<');
 
-	while (s != e) {
-		c = *s;
+	s = pos;
 
-		if (c == '<') {
-			break;
-		}
-
-		ret += c;
-		s++;
-	}
-
-	return ret;
+	return std::string{old_s, pos};
 }
 
 template <typename It>
@@ -265,12 +254,8 @@ xml_node *element(It &s, const It &e)
 		}
 
 		if (ret->children.empty()) {
-			try {
-				ret->value = chardata(s, e);
-				rtrim(ret->value);
-			} catch (const parser_error &) {
-
-			}
+			ret->value = chardata(s, e);
+			rtrim(ret->value);
 		}
 
 		match_char(s, e, '<');

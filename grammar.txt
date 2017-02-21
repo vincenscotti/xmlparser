@@ -11,7 +11,7 @@ name ::= (letter | '_' | ':') (letter | digit | '.' | ':' | '-' | '_')*
 attribute ::= name equals attribute_value
 attribute_value ::= ('"' (char - '"')* '"') | ("'" (char - "'")* "'")
 
-content ::= chardata | (maybe_space element)*
+content ::= (maybe_space element)* | chardata
 
 char ::= [#x00 to #x7E]
 chardata ::= (char - '<')*
