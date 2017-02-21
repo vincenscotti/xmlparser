@@ -31,7 +31,7 @@ void match_string(It &s, const It &e, const std::string &str)
 }
 
 template <typename It>
-void whitespaces(It &s, const It &e)
+void space(It &s, const It &e)
 {
 	if (s == e || !std::isspace(*s)) {
 		throw parser_error{"whitespace"};
@@ -43,10 +43,10 @@ void whitespaces(It &s, const It &e)
 }
 
 template <typename It>
-void maybe_whitespaces(It &s, const It &e)
+void maybe_space(It &s, const It &e)
 {
 	try {
-		whitespaces(s, e);
+		space(s, e);
 	} catch (const parser_error &) {
 
 	}
@@ -55,15 +55,15 @@ void maybe_whitespaces(It &s, const It &e)
 template <typename It>
 void equals(It &s, const It &e)
 {
-	maybe_whitespaces(s, e);
+	maybe_space(s, e);
 	match_char(s, e, '=');
-	maybe_whitespaces(s, e);
+	maybe_space(s, e);
 }
 
 template <typename It>
 std::string version_info(It &s, const It &e)
 {
-	whitespaces(s, e);
+	space(s, e);
 	match_string(s, e, "version");
 	equals(s, e);
 
@@ -90,7 +90,7 @@ std::string xml_decl(It &s, const It &e)
 
 	match_string(s, e, first_match);
 	version = version_info(s, e);
-	maybe_whitespaces(s, e);
+	maybe_space(s, e);
 	match_string(s, e, last_match);
 
 	return version;
@@ -103,7 +103,7 @@ xml_doc prologue(It &s, const It &e)
 
 	doc.version = xml_decl(s, e);
 
-	maybe_whitespaces(s, e);
+	maybe_space(s, e);
 
 	return doc;
 }
@@ -226,7 +226,7 @@ xml_node *element(It &s, const It &e)
 
 		while (true) {
 			try {
-				whitespaces(s, e);
+				space(s, e);
 				ret->attributes.insert(attribute(s, e));
 			} catch (const parser_error &) {
 				break;
@@ -251,7 +251,7 @@ xml_node *element(It &s, const It &e)
 		}
 
 		while (true) {
-			maybe_whitespaces(s, e);
+			maybe_space(s, e);
 
 			try {
 				auto curr = s;
@@ -276,7 +276,7 @@ xml_node *element(It &s, const It &e)
 		match_char(s, e, '<');
 		match_char(s, e, '/');
 		match_string(s, e, ret->name);
-		maybe_whitespaces(s, e);
+		maybe_space(s, e);
 		match_char(s, e, '>');
 	} catch (const parser_error &) {
 		delete ret;

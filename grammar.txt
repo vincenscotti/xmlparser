@@ -1,19 +1,21 @@
 document ::= prologue? element
 
-prologue ::= xml_decl space?
-xml_decl ::= "<?xml" version_info space? "?>"
+prologue ::= xml_decl maybe_space
+xml_decl ::= "<?xml" version_info maybe_space "?>"
 version_info ::= space "version" equals ("'1.0'" | '"1.0"')
-equals ::= space? "=" space?
+equals ::= maybe_space "=" maybe_space
 
-element ::= "<" name (space attribute)* space? ("/>" | (">" content "</" name space? ">"))
+element ::= "<" name (space attribute)* maybe_space ("/>" | (">" content "</"
+name maybe_space ">"))
 name ::= (letter | '_' | ':') (letter | digit | '.' | ':' | '-' | '_')*
 attribute ::= name equals attribute_value
 attribute_value ::= ('"' (char - '"')* '"') | ("'" (char - "'")* "'")
 
-content ::= chardata | (space? element)*
+content ::= chardata | (maybe_space element)*
 
-char ::= #xA | [#x20 to #x7E]
+char ::= [#x00 to #x7E]
 chardata ::= (char - '<')*
 letter ::= [#x41 to #x7A]
 digit ::= [#x30 to #x39]
 space ::= (#x20 | #x9 | #xD | #xA)+
+maybe_space ::= space?
