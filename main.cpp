@@ -42,6 +42,13 @@ int main(int argc, char *argv[])
 	}
 
 	std::ifstream infile(argv[1]);
+
+	if (!infile) {
+		std::cerr << "Can't open file " << argv[1] << std::endl;
+
+		return 1;
+	}
+
 	infile >> std::noskipws;
 
 	std::istream_iterator<char> file_it(infile), eof;
