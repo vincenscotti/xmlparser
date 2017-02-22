@@ -762,12 +762,42 @@ std::string attribute_value(It &s, const It &e)
 }
 \end{minted}
 
+\subsection{match\_char, match\_string}
+
+Le funzioni \emph{match\_char} e \emph{match\_string} sono utilizzate per
+consumare rispettivamente un carattere o una sequenza di caratteri nella
+stringa d'ingresso.
+
+\begin{minted}{C++}
+template <typename It> 
+void match_char(It &s, const It &e, char c)
+{
+        if (s == e || *s != c) {
+                throw parser_error{std::string{c}};
+        }   
+
+        s++;
+}
+
+template <typename It> 
+void match_string(It &s, const It &e, const std::string &str)
+{
+        for (char c : str) {
+                if (s == e || *s != c) {
+                        throw parser_error{str};
+                }   
+
+                s++;
+        }   
+}
+\end{minted}
+
 \subsection{API}
 
 La libreria esporta all'utilizzatore una sola funzione chiamata \emph{parse}. In
 maniera analoga alle funzioni di parsing, a partire da due iteratori ad inizio e
 fine stringa costruisce una struttura \emph{xml\_doc} chiamando la regola
-grammaticale di piu' alto livello, \syntax{<document>}.
+grammaticale di piu' alto livello, ovvero \syntax{<document>}.
 
 \begin{minted}{C++}
 template <typename It>
