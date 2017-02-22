@@ -11,7 +11,7 @@
 		<name>Strawberry Belgian Waffles</name>
 		<price>$7.95</price>
 		<description>
-		Light Belgian waffles covered with strawberries
+		Light Belgian waffles covered with milk
 		</description>
 		<calories>900</calories>
 	</food>
@@ -19,7 +19,7 @@
 		<name>French Toast</name>
 		<price>$4.50</price>
 		<description>
-		Thick slices made from our homemade sourdough bread
+		Thick slices made from our homemade bread
 		</description>
 		<calories>600</calories>
 	</food>
